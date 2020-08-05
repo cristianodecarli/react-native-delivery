@@ -54,12 +54,31 @@ const Dashboard: React.FC = () => {
   const navigation = useNavigation();
 
   async function handleNavigate(id: number): Promise<void> {
-    // Navigate do ProductDetails page
+    navigation.navigate('FoodDetails', { id });
   }
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      // Load Foods from API
+      try {
+        const { data } = await api.get('foods', {
+          params: {
+            name_like: searchValue,
+            category_like: selectedCategory,
+          },
+        });
+        setFoods(
+          data.map((food: Food) => ({
+            id: food.id,
+            name: food.name,
+            description: food.description,
+            price: food.price,
+            formattedPrice: formatValue(food.price),
+            thumbnail_url: food.thumbnail_url,
+          })),
+        );
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     loadFoods();
@@ -67,14 +86,20 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadCategories(): Promise<void> {
-      // Load categories from API
+      try {
+        const { data } = await api.get('categories');
+        setCategories([...data]);
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     loadCategories();
   }, []);
 
   function handleSelectCategory(id: number): void {
-    // Select / deselect category
+    const selected = id !== selectedCategory ? id : undefined;
+    setSelectedCategory(selected);
   }
 
   return (
@@ -105,7 +130,7 @@ const Dashboard: React.FC = () => {
             horizontal
             showsHorizontalScrollIndicator={false}
           >
-            {categories.map(category => (
+            {categories.map((category: Category) => (
               <CategoryItem
                 key={category.id}
                 isSelected={category.id === selectedCategory}
@@ -125,7 +150,7 @@ const Dashboard: React.FC = () => {
         <FoodsContainer>
           <Title>Pratos</Title>
           <FoodList>
-            {foods.map(food => (
+            {foods.map((food: Food) => (
               <Food
                 key={food.id}
                 onPress={() => handleNavigate(food.id)}
